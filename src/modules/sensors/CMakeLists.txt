@@ -42,6 +42,7 @@ px4_add_module(
 		rc_update.cpp
 		sensors.cpp
 		sensors_init.cpp
+		parameters.cpp
 
 	DEPENDS
 		platforms__common
