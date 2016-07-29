@@ -14,9 +14,10 @@ echo program: $program
 echo model: $model
 echo build_path: $build_path
 
-mkdir -p $build_path/src/firmware/posix/rootfs/fs/microsd
-mkdir -p $build_path/src/firmware/posix/rootfs/eeprom
-touch $build_path/src/firmware/posix/rootfs/eeprom/parameters
+mkdir -p $build_path/rootfs/fs/microsd
+mkdir -p $build_path/rootfs/eeprom
+mkdir -p $build_path/rootfs/etc/init
+mkdir -p $build_path/rootfs/etc/mixers
 
 if [ "$chroot" == "1" ]
 then
@@ -53,8 +54,8 @@ fi
 set -e
 
 cd $build_path/..
-cp Tools/posix_lldbinit $build_path/src/firmware/posix/.lldbinit
-cp Tools/posix.gdbinit $build_path/src/firmware/posix/.gdbinit
+cp Tools/posix_lldbinit $build_path/rootfs/.lldbinit
+cp Tools/posix.gdbinit $build_path/rootfs/.gdbinit
 
 SIM_PID=0
 
@@ -98,13 +99,13 @@ then
 	# This is not a simulator, but a log file to replay
 
 	# Check if we need to creat a param file to allow user to change parameters
-	if ! [ -f "${build_path}/src/firmware/posix/rootfs/replay_params.txt" ]
+	if ! [ -f "${build_path}/rootfs/replay_params.txt" ]
 		then
-		touch ${build_path}/src/firmware/posix/rootfs/replay_params.txt
+		touch ${build_path}/rootfs/replay_params.txt
 	fi
 fi
 
-cd $build_path/src/firmware/posix
+cd $build_path/rootfs
 
 if [ "$logfile" != "" ]
 then
@@ -114,21 +115,28 @@ fi
 # Do not exit on failure now from here on because we want the complete cleanup
 set +e
 
+# Prepend to path to prioritize PX4 commands over potentially already
+# installed PX4 commands.
+export PATH="$build_path/bin":$PATH
+
+export SIM_MODEL=${model}
+export SIM_PROGRAM=${program}
+
 # Start Java simulator
 if [ "$debugger" == "lldb" ]
 then
-	lldb -- px4 ../../../../${rc_script}_${program}_${model}
+	lldb -- px4 etc/init/${rc_script}
 elif [ "$debugger" == "gdb" ]
 then
-	gdb --args px4 ../../../../${rc_script}_${program}_${model}
+	gdb --args px4 etc/init/${rc_script}
 elif [ "$debugger" == "ddd" ]
 then
-	ddd --debugger gdb --args px4 ../../../../${rc_script}_${program}_${model}
+	ddd --debugger gdb --args px4 etc/init${rc_script}
 elif [ "$debugger" == "valgrind" ]
 then
-	valgrind ./px4 ../../../../${rc_script}_${program}_${model}
+	valgrind px4 etc/init/${rc_script}
 else
-	$sudo_enabled ./px4 $chroot_enabled ../../../../${rc_script}_${program}_${model}
+	$sudo_enabled px4 $chroot_enabled etc/init/${rc_script}
 fi
 
 if [ "$program" == "jmavsim" ]
