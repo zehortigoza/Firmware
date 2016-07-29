@@ -9,6 +9,9 @@ set(config_module_list
 	drivers/pwm_out_sim
 
 	platforms/common
+	platforms/posix/px4_layer
+	platforms/posix/px4_daemon
+	platforms/posix/work_queue
 	platforms/posix/drivers/accelsim
 	platforms/posix/drivers/adcsim
 	platforms/posix/drivers/airspeedsim
@@ -18,8 +21,6 @@ set(config_module_list
 	platforms/posix/drivers/ledsim
 	platforms/posix/drivers/rgbledsim
 	platforms/posix/drivers/tonealrmsim
-	platforms/posix/px4_layer
-	platforms/posix/work_queue
 
 	systemcmds/esc_calib
 	systemcmds/mixer
@@ -97,7 +98,7 @@ set(config_extra_builtin_cmds
 	)
 
 set(config_sitl_rcS
-	posix-configs/SITL/init/rcS
+	rcS
 	CACHE FILEPATH "init script for sitl"
 	)
 

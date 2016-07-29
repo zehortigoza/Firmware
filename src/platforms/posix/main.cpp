@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (C) 2015 Mark Charlebois. All rights reserved.
+ *   Copyright (C) 2015-2016 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,134 +32,236 @@
  ****************************************************************************/
 /**
  * @file main.cpp
- * Basic shell to execute builtin "apps"
+ *
+ * This is the main() of PX4 for POSIX.
+ *
+ * The application is designed as a daemon/server app with multiple clients.
+ * Both, the server and the client is started using this main() function.
+ *
+ * If the executable is called with its usual name 'px4', it will start the
+ * server. However, if it is started with an alias starting with 'px4-' such
+ * as 'px4-navigator', it will start as a client and try to connect to the
+ * server.
+ *
+ * The alias for all modules need to be created using the build system.
  *
  * @author Mark Charlebois <charlebm@gmail.com>
  * @author Roman Bapst <bapstroman@gmail.com>
+ * @author Julian Oes <julian@oes.ch>
+ * @author Beat Küng <beat-kueng@gmx.net>
  */
 
-#include <iostream>
 #include <fstream>
 #include <string>
-#include <sstream>
-#include <vector>
 #include <signal.h>
-#include <unistd.h>
 #include <stdio.h>
-#include "apps.h"
+#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
+
+#include <px4_log.h>
+#include <px4_tasks.h>
+#include <px4_posix.h>
+#include <px4_log.h>
+
 #include "px4_middleware.h"
 #include "DriverFramework.hpp"
-#include <termios.h>
+#include "px4_middleware.h"
+#include "px4_daemon/client.h"
+#include "px4_daemon/server.h"
+#include "px4_daemon/pxh.h"
+
+
+static const char *LOCK_FILE_PATH = "/tmp/px4_lock";
+
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
+
+static bool _exit_requested = false;
+
 
 namespace px4
 {
 void init_once(void);
 }
 
-using namespace std;
-
-typedef int (*px4_main_t)(int argc, char *argv[]);
-
-#define CMD_BUFF_SIZE	100
-
-static bool _ExitFlag = false;
-
-static struct termios orig_term;
-
 extern "C" {
-	void _SigIntHandler(int sig_num);
-	void _SigIntHandler(int sig_num)
-	{
-		cout.flush();
-		cout << endl << "Exiting..." << endl;
-		cout.flush();
-		_ExitFlag = true;
-	}
-	void _SigFpeHandler(int sig_num);
-	void _SigFpeHandler(int sig_num)
-	{
-		cout.flush();
-		cout << endl << "floating point exception" << endl;
-		PX4_BACKTRACE();
-		cout.flush();
-	}
+	static void _SigIntHandler(int sig_num);
+	static void _SigFpeHandler(int sig_num);
 }
 
-static void print_prompt()
+static void register_sig_handler();
+static void set_cpu_scaling();
+static void run_startup_bash_script(const char *commands_file);
+static void use_chroot();
+static void wait_to_exit();
+static bool is_already_running();
+static void print_usage();
+
+
+int main(int argc, char **argv)
 {
-	cout.flush();
-	cout << "pxh> ";
-	cout.flush();
-}
+	bool is_client = false;
+	bool chroot_on = false;
+	bool pxh_off = false;
+	char *commands_file = nullptr;
 
-static void run_cmd(const vector<string> &appargs, bool exit_on_fail, bool silently_fail = false)
-{
-	// command is appargs[0]
-	string command = appargs[0];
+	/* Symlinks point to all commands that can be used as a client
+	 * with a 'px4-' prefix. */
 
-	if (apps.find(command) != apps.end()) {
-		const char *arg[appargs.size() + 2];
+	const char prefix[] = "px4-";
 
-		unsigned int i = 0;
+	if (strstr(argv[0], prefix)) {
+		is_client = true;
+	}
 
-		while (i < appargs.size() && appargs[i] != "") {
-			arg[i] = (char *)appargs[i].c_str();
-			++i;
+	if (argc < 2) {
+		PX4_ERR("Not enough arguments.");
+		print_usage();
+		return -1;
+	}
+
+	if (is_client) {
+
+		if (!is_already_running()) {
+			PX4_ERR("PX4 daemon not running yet");
+			return -1;
 		}
 
-		arg[i] = (char *)0;
+		/* Remove the prefix by moving argv[0] and 1 more for the 0 termination. */
+		memmove(argv[0], argv[0] + strlen(prefix), strlen(argv[0]) + 1);
 
-		int retval = apps[command](i, (char **)arg);
+		px4_daemon::Client client;
+		client.generate_uuid();
+		client.register_sig_handler();
+		return client.process_args(argc, (const char **)argv);
 
-		if (retval) {
-			cout << "Command '" << command << "' failed, returned " << retval << endl;
+	} else {
+		/* Server/daemon apps need to parse the command line arguments. */
+		for (int i = 1; i < argc; ++i) {
+			if (argv[i][0] == '-') {
 
-			if (exit_on_fail && retval) {
-				exit(retval);
+				if (strcmp(argv[i], "-h") == 0) {
+					print_usage();
+					return 0;
+
+				} else if (strcmp(argv[i], "-d") == 0) {
+					pxh_off = true;
+
+				} else if (strcmp(argv[i], "-c") == 0) {
+					chroot_on = true;
+
+				} else {
+					PX4_ERR("Unknown/unhandled parameter: %s", argv[i]);
+					print_usage();
+					return 1;
+				}
+
+			} else {
+				// This is an argument that does not have '-' it must be the file name.
+				std::ifstream infile(argv[i]);
+
+				if (infile.good()) {
+					infile.close();
+					commands_file = argv[i];
+
+				} else {
+					PX4_ERR("Error opening file: %s", argv[i]);
+					return -1;
+				}
 			}
 		}
 
-	} else if (command.compare("help") == 0) {
-		list_builtins();
+		if (is_already_running()) {
+			PX4_ERR("PX4 daemon already running");
+			return -1;
+		}
 
-	} else if (command.length() == 0 || command[0] == '#') {
-		// Do nothing
+		if (chroot_on) {
+			// Lock this application in the current working dir
+			// this is not an attempt to secure the environment,
+			// rather, to replicate a deployed file system.
+			use_chroot();
+		}
 
-	} else if (!silently_fail) {
-		cout << "Invalid command: " << command << "\ntype 'help' for a list of commands" << endl;
+		px4_daemon::Server server;
+		server.start();
 
+		register_sig_handler();
+		set_cpu_scaling();
+
+		DriverFramework::Framework::initialize();
+
+		px4::init_once();
+		px4::init(argc, argv, "px4");
+
+		run_startup_bash_script(commands_file);
+
+		// We now block here until we need to exit.
+		if (pxh_off) {
+			wait_to_exit();
+
+		} else {
+			px4_daemon::Pxh pxh;
+			pxh.run_pxh();
+		}
+
+		// When we exit, we need to stop muorb on Snapdragon.
+
+#ifdef __PX4_POSIX_EAGLE
+		// Sending muorb stop is needed if it is running to exit cleanly.
+		// TODO: we should check with px4_task_is_running("muorb") before stopping it.
+		std::string muorb_stop_cmd("muorb stop");
+		px4_daemon::Pxh::process_line(muorb_stop_cmd, true);
+#endif
+
+		std::string shutdown_cmd("shutdown");
+		px4_daemon::Pxh::process_line(shutdown_cmd, true);
+
+		return OK;
 	}
 }
 
-static void usage()
+static void register_sig_handler()
 {
+	struct sigaction sig_int;
+	memset(&sig_int, 0, sizeof(struct sigaction));
+	sig_int.sa_handler = _SigIntHandler;
+	sig_int.sa_flags = 0;// not SA_RESTART!;
 
-	cout << "./px4 [-d] [startup_config] -h" << std::endl;
-	cout << "   -d            - Optional flag to run the app in daemon mode and does not listen for user input." <<
-	     std::endl;
-	cout << "                   This is needed if px4 is intended to be run as a upstart job on linux" << std::endl;
-	cout << "<startup_config> - config file for starting/stopping px4 modules" << std::endl;
-	cout << "   -h            - help/usage information" << std::endl;
+	struct sigaction sig_fpe;
+	memset(&sig_fpe, 0, sizeof(struct sigaction));
+	sig_fpe.sa_handler = _SigFpeHandler;
+	sig_fpe.sa_flags = 0;// not SA_RESTART!;
+
+	// We want to ignore if a PIPE has been closed.
+	struct sigaction sig_pipe;
+	memset(&sig_pipe, 0, sizeof(struct sigaction));
+	sig_pipe.sa_handler = SIG_IGN;
+
+	sigaction(SIGINT, &sig_int, NULL);
+	//sigaction(SIGTERM, &sig_int, NULL);
+	sigaction(SIGFPE, &sig_fpe, NULL);
+	sigaction(SIGPIPE, &sig_pipe, NULL);
 }
 
-static void process_line(string &line, bool exit_on_fail)
+static void _SigIntHandler(int sig_num)
 {
-	vector<string> appargs(10);
-
-	stringstream(line) >> appargs[0] >> appargs[1] >> appargs[2] >> appargs[3] >> appargs[4] >> appargs[5] >> appargs[6] >>
-			   appargs[7] >> appargs[8] >> appargs[9];
-	run_cmd(appargs, exit_on_fail);
+	fflush(stdout);
+	printf("\nExiting...\n");
+	fflush(stdout);
+	px4_daemon::Pxh::stop();
+	_exit_requested = true;
 }
 
-static void restore_term(void)
+static void _SigFpeHandler(int sig_num)
 {
-	cout << "Restoring terminal\n";
-	tcsetattr(0, TCSANOW, &orig_term);
-}
-
-bool px4_exit_requested(void)
-{
-	return _ExitFlag;
+	fflush(stdout);
+	printf("\nfloating point exception\n");
+	PX4_BACKTRACE();
+	fflush(stdout);
 }
 
 static void set_cpu_scaling()
@@ -177,245 +279,101 @@ static void set_cpu_scaling()
 #endif
 }
 
-int main(int argc, char **argv)
+static void run_startup_bash_script(const char *commands_file)
 {
-	bool daemon_mode = false;
-	bool chroot_on = false;
+	std::string bash_command("bash ");
 
-	tcgetattr(0, &orig_term);
-	atexit(restore_term);
+	bash_command += commands_file;
 
-	struct sigaction sig_int;
-	memset(&sig_int, 0, sizeof(struct sigaction));
-	sig_int.sa_handler = _SigIntHandler;
-	sig_int.sa_flags = 0;// not SA_RESTART!;
+	PX4_INFO("Calling bash script: %s", bash_command.c_str());
 
-	struct sigaction sig_fpe;
-	memset(&sig_fpe, 0, sizeof(struct sigaction));
-	sig_fpe.sa_handler = _SigFpeHandler;
-	sig_fpe.sa_flags = 0;// not SA_RESTART!;
+	int ret = system(bash_command.c_str());
 
-	sigaction(SIGINT, &sig_int, NULL);
-	//sigaction(SIGTERM, &sig_int, NULL);
-	sigaction(SIGFPE, &sig_fpe, NULL);
-
-	set_cpu_scaling();
-
-	int index = 1;
-	char *commands_file = nullptr;
-
-	while (index < argc) {
-		if (argv[index][0] == '-') {
-			// the arg starts with -
-			if (strcmp(argv[index], "-d") == 0) {
-				daemon_mode = true;
-
-			} else if (strcmp(argv[index], "-h") == 0) {
-				usage();
-				return 0;
-
-			} else if (strcmp(argv[index], "-c") == 0) {
-				chroot_on = true;
-
-			} else {
-				PX4_WARN("Unknown/unhandled parameter: %s", argv[index]);
-				return 1;
-			}
-
-		} else {
-			// this is an argument that does not have '-' prefix; treat it like a file name
-			ifstream infile(argv[index]);
-
-			if (infile.good()) {
-				infile.close();
-				commands_file = argv[index];
-
-			} else {
-				PX4_WARN("Error opening file: %s", argv[index]);
-				return -1;
-			}
-		}
-
-		++index;
-	}
-
-
-	DriverFramework::Framework::initialize();
-	px4::init_once();
-
-	px4::init(argc, argv, "px4");
-
-	// if commandfile is present, process the commands from the file
-	if (commands_file != nullptr) {
-		ifstream infile(commands_file);
-
-		if (infile.is_open()) {
-			for (string line; getline(infile, line, '\n');) {
-
-				if (px4_exit_requested()) {
-					break;
-				}
-
-				// TODO: this should be true but for that we have to check all startup files
-				process_line(line, false);
-			}
-
-		} else {
-			PX4_WARN("Error opening file: %s", commands_file);
-		}
-	}
-
-	if (chroot_on) {
-		// Lock this application in the current working dir
-		// this is not an attempt to secure the environment,
-		// rather, to replicate a deployed file system.
-
-#ifdef PATH_MAX
-		const unsigned path_max_len = PATH_MAX;
-#else
-		const unsigned path_max_len = 1024;
-#endif
-
-		char pwd_path[path_max_len];
-		const char *folderpath = "/rootfs/";
-
-		if (nullptr == getcwd(pwd_path, sizeof(pwd_path))) {
-			PX4_ERR("Failed acquiring working dir, abort.");
-			exit(1);
-		}
-
-		if (nullptr == strcat(pwd_path, folderpath)) {
-			PX4_ERR("Failed completing path, abort.");
-			exit(1);
-		}
-
-		if (chroot(pwd_path)) {
-			PX4_ERR("Failed chrooting application, path: %s, error: %s.", pwd_path, strerror(errno));
-			exit(1);
-		}
-
-		if (chdir("/")) {
-			PX4_ERR("Failed changing to root dir, path: %s, error: %s.", pwd_path, strerror(errno));
-			exit(1);
-		}
-	}
-
-	if (!daemon_mode) {
-		string mystr = "";
-		string string_buffer[CMD_BUFF_SIZE];
-		int buf_ptr_write = 0;
-		int buf_ptr_read = 0;
-
-		print_prompt();
-
-		// change input mode so that we can manage shell
-		struct termios term;
-		tcgetattr(0, &term);
-		term.c_lflag &= ~ICANON;
-		term.c_lflag &= ~ECHO;
-		tcsetattr(0, TCSANOW, &term);
-		setbuf(stdin, NULL);
-
-		while (!_ExitFlag) {
-
-			char c = getchar();
-
-			switch (c) {
-			case 127:	// backslash
-				if (mystr.length() > 0) {
-					mystr.pop_back();
-					printf("%c[2K", 27);	// clear line
-					cout << (char)13;
-					print_prompt();
-					cout << mystr;
-				}
-
-				break;
-
-			case'\n':	// user hit enter
-				if (buf_ptr_write == CMD_BUFF_SIZE) {
-					buf_ptr_write = 0;
-				}
-
-				if (buf_ptr_write > 0) {
-					if (!mystr.empty() && mystr != string_buffer[buf_ptr_write - 1]) {
-						string_buffer[buf_ptr_write] = mystr;
-						buf_ptr_write++;
-					}
-
-				} else {
-					if (!mystr.empty() && mystr != string_buffer[CMD_BUFF_SIZE - 1]) {
-						string_buffer[buf_ptr_write] = mystr;
-						buf_ptr_write++;
-					}
-				}
-
-				cout << endl;
-				process_line(mystr, false);
-				mystr = "";
-				buf_ptr_read = buf_ptr_write;
-
-				print_prompt();
-				break;
-
-			case '\033': {	// arrow keys
-					c = getchar();	// skip first one, does not have the info
-					c = getchar();
-
-					// arrow up
-					if (c == 'A') {
-						buf_ptr_read--;
-						// arrow down
-
-					} else if (c == 'B') {
-						if (buf_ptr_read < buf_ptr_write) {
-							buf_ptr_read++;
-						}
-
-					} else {
-						// TODO: Support editing current line
-					}
-
-					if (buf_ptr_read < 0) {
-						buf_ptr_read = 0;
-					}
-
-					string saved_cmd = string_buffer[buf_ptr_read];
-					printf("%c[2K", 27);
-					cout << (char)13;
-					mystr = saved_cmd;
-					print_prompt();
-					cout << mystr;
-					break;
-				}
-
-			default:	// any other input
-				if (c > 3) {
-					cout << c;
-					mystr += c;
-				}
-
-				break;
-			}
-		}
+	if (ret == 0) {
+		PX4_INFO("Startup script returned successfully");
 
 	} else {
-		while (!_ExitFlag) {
-			usleep(100000);
+		PX4_WARN("Startup script returned with return value: %d", ret);
+	}
+}
+
+static void use_chroot()
+{
+	char pwd_path[PATH_MAX];
+	const char *folderpath = "/../rootfs/";
+
+	if (nullptr == getcwd(pwd_path, sizeof(pwd_path))) {
+		PX4_ERR("Failed acquiring working dir, abort.");
+		exit(1);
+	}
+
+	if (nullptr == strcat(pwd_path, folderpath)) {
+		PX4_ERR("Failed completing path, abort.");
+		exit(1);
+	}
+
+	if (chroot(pwd_path)) {
+		PX4_ERR("Failed chrooting application, path: %s, error: %s.", pwd_path, strerror(errno));
+		exit(1);
+	}
+
+	if (chdir("/")) {
+		PX4_ERR("Failed changing to root dir, path: %s, error: %s.", pwd_path, strerror(errno));
+		exit(1);
+	}
+}
+
+static void wait_to_exit()
+{
+	while (!_exit_requested) {
+		usleep(100000);
+	}
+}
+
+static void print_usage()
+{
+	printf("Usage for Server/daemon process: \n");
+	printf("\n");
+	printf("    px4 [-h|-c|-d] <startup_file>\n");
+	printf("\n");
+	printf("    <startup_config> bash start script to be used as startup\n");
+	printf("        -h           help/usage information\n");
+	printf("        -c           use chroot\n");
+	printf("        -d           daemon mode, don't start pxh shell\n");
+	printf("\n");
+	printf("Usage for client: \n");
+	printf("\n");
+	printf("    px4-MODULE command using an alias.\n");
+	printf("        e.g.: px4-commander status\n");
+}
+
+static bool is_already_running()
+{
+	struct flock fl;
+	int fd = open(LOCK_FILE_PATH, O_RDWR | O_CREAT, 0666);
+
+	if (fd < 0) {
+		return false;
+	}
+
+	fl.l_type   = F_WRLCK;
+	fl.l_whence = SEEK_SET;
+	fl.l_start  = 0;
+	fl.l_len    = 0;
+	fl.l_pid    = getpid();
+
+	if (fcntl(fd, F_SETLK, &fl) == -1) {
+		// We failed to create a file lock, must be already locked.
+
+		if (errno == EACCES || errno == EAGAIN) {
+			return true;
 		}
 	}
 
-	// TODO: Always try to stop muorb for QURT because px4_task_is_running doesn't seem to work.
-	if (true) {
-		//if (px4_task_is_running("muorb")) {
-		// sending muorb stop is needed if it is running to exit cleanly
-		vector<string> muorb_stop_cmd = { "muorb", "stop" };
-		run_cmd(muorb_stop_cmd, !daemon_mode, true);
-	}
+	return false;
+}
 
-	vector<string> shutdown_cmd = { "shutdown" };
-	run_cmd(shutdown_cmd, true);
-	DriverFramework::Framework::shutdown();
-
-	return OK;
+bool px4_exit_requested(void)
+{
+	return _exit_requested;
 }
