@@ -45,7 +45,7 @@ if(NOT ${BOARD} STREQUAL "sim")
 	if (config_io_board)
 		set(extras "${CMAKE_BINARY_DIR}/src/modules/px4iofirmware/${config_io_board}.bin")
 	endif()
-	
+
 	set(romfs_dir "ROMFS/px4fmu_common")
 	if (${BOARD} STREQUAL "tap-v1")
 	set(romfs_dir "ROMFS/tap_common")
@@ -72,7 +72,7 @@ if(NOT ${BOARD} STREQUAL "sim")
 		AIRFRAMES_XML ${CMAKE_BINARY_DIR}/airframes.xml
 		)
 
-	configure_file(gdbinit.in .gdbinit)
+	configure_file(cmake/nuttx/gdbinit.in .gdbinit)
 
 	add_custom_target(debug
 		COMMAND ${GDB} ${CMAKE_CURRENT_BINARY_DIR}/firmware_nuttx
