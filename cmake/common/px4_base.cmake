@@ -396,7 +396,7 @@ function(px4_generate_messages)
 		VERBATIM
 		)
 
-	# !sources
+	# sources
 	set(msg_source_out_path	${CMAKE_BINARY_DIR}/topics_sources)
 	set(msg_source_files_out ${msg_source_out_path}/uORBTopics.cpp)
 	foreach(msg ${msg_list})
