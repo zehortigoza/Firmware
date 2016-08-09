@@ -19,15 +19,6 @@ mkdir -p $build_path/rootfs/eeprom
 mkdir -p $build_path/rootfs/etc/init
 mkdir -p $build_path/rootfs/etc/mixers
 
-if [ "$chroot" == "1" ]
-then
-	chroot_enabled=-c
-	sudo_enabled=sudo
-else
-	chroot_enabled=""
-	sudo_enabled=""
-fi
-
 if [ "$model" == "" ] || [ "$model" == "none" ]
 then
 	echo "empty model, setting iris as default"
@@ -136,7 +127,7 @@ elif [ "$debugger" == "valgrind" ]
 then
 	valgrind px4 etc/init/${rc_script}
 else
-	$sudo_enabled px4 $chroot_enabled etc/init/${rc_script}
+	px4 etc/init/${rc_script}
 fi
 
 if [ "$program" == "jmavsim" ]
