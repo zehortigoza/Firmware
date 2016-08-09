@@ -16,8 +16,6 @@ echo build_path: $build_path
 
 mkdir -p $build_path/rootfs/fs/microsd
 mkdir -p $build_path/rootfs/eeprom
-mkdir -p $build_path/rootfs/etc/init
-mkdir -p $build_path/rootfs/etc/mixers
 
 if [ "$model" == "" ] || [ "$model" == "none" ]
 then
