@@ -9,7 +9,7 @@ fi
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 HOOK_FILE="$DIR/../.git/hooks/pre-commit"
-if [ ! -f $HOOK_FILE ]; then
+if [ ! -f $HOOK_FILE ] && [ "$CI" != "true" ]; then
 	echo -e "\033[31mNinja tip: enable Git pre-commit hook to check for code style.\033[0m"
 	echo ""
 	echo ""
