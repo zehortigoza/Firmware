@@ -53,6 +53,7 @@ ssh $target /bin/bash <<EOF
         router_running=1
         # try stopping router
         /etc/init.d/mavlink-routerd.sh stop
+        sleep 1
         p=\$(fuser /dev/ttyS1)
         if [ -n "\$p" ]; then
             echo "Process \$p is running and keeping UART busy"
@@ -68,6 +69,7 @@ ssh $target /bin/bash <<EOF
     if [ \$router_running -eq 1 ]; then
         echo "Restarting router"
         /etc/init.d/mavlink-routerd.sh start
+        sleep 1
     fi
 EOF
 
