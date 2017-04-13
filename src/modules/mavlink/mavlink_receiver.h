@@ -79,6 +79,7 @@
 #include <uORB/topics/control_state.h>
 #include <uORB/topics/collision_report.h>
 
+#include "mavlink_orb_subscription.h"
 
 #include "mavlink_ftp.h"
 
@@ -251,6 +252,10 @@ private:
 
 	uint8_t _mom_switch_pos[MOM_SWITCH_COUNT];
 	uint16_t _mom_switch_state;
+
+#ifdef OPTICAL_FLOW_USE_INTERNAL_GYRO_DATA
+	MavlinkOrbSubscription *_sensor_sub;
+#endif
 
 	param_t _p_bat_emergen_thr;
 	param_t _p_bat_crit_thr;

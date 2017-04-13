@@ -148,6 +148,9 @@ MavlinkReceiver::MavlinkReceiver(Mavlink *parent) :
 	_orb_class_instance(-1),
 	_mom_switch_pos{},
 	_mom_switch_state(0),
+#ifdef OPTICAL_FLOW_USE_INTERNAL_GYRO_DATA
+	_sensor_sub(_mavlink->add_orb_subscription(ORB_ID(sensor_combined))),
+#endif
 	_p_bat_emergen_thr(param_find("BAT_EMERGEN_THR")),
 	_p_bat_crit_thr(param_find("BAT_CRIT_THR")),
 	_p_bat_low_thr(param_find("BAT_LOW_THR"))
@@ -607,9 +610,22 @@ MavlinkReceiver::handle_message_optical_flow_rad(mavlink_message_t *msg)
 	f.integration_timespan = flow.integration_time_us;
 	f.pixel_flow_x_integral = flow.integrated_x;
 	f.pixel_flow_y_integral = flow.integrated_y;
+
+#ifdef OPTICAL_FLOW_USE_INTERNAL_GYRO_DATA
+	uint64_t _sensor_time;
+	struct sensor_combined_s sensor = {};
+	if (!_sensor_sub->update(&_sensor_time, &sensor)) {
+		return;
+	}
+
+	f.gyro_x_rate_integral = sensor.gyro_rad[0];
+	f.gyro_y_rate_integral = sensor.gyro_rad[1];
+	f.gyro_z_rate_integral = sensor.gyro_rad[2];
+#else
 	f.gyro_x_rate_integral = flow.integrated_xgyro;
 	f.gyro_y_rate_integral = flow.integrated_ygyro;
 	f.gyro_z_rate_integral = flow.integrated_zgyro;
+#endif
 	f.time_since_last_sonar_update = flow.time_delta_distance_us;
 	f.ground_distance_m = flow.distance;
 	f.quality = flow.quality;
