@@ -668,6 +668,8 @@ protected:
 	}
 };
 
+#include <px4_log.h>
+
 
 class MavlinkStreamHighresIMU : public MavlinkStream
 {
@@ -734,6 +736,13 @@ protected:
 	{
 		struct sensor_combined_s sensor = {};
 		struct differential_pressure_s differential_pressure = {};
+		static hrt_abstime prev = 0;
+
+		if (prev) {
+			float f = 1.0f / ((float)(t - prev) / 1000000);
+			PX4_WARN("highres_imu f=%i _interval=%i", (int)f, _interval);
+		}
+		prev = t;
 
 		if (_sensor_sub->update(&_sensor_time, &sensor)) {
 			uint16_t fields_updated = 0;

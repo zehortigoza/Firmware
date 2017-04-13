@@ -996,6 +996,7 @@ Mavlink::send_bytes(const uint8_t *buf, unsigned packet_len)
 	/* If the wait until transmit flag is on, only transmit after we've received messages.
 	   Otherwise, transmit all the time. */
 	if (!should_transmit()) {
+		PX4_WARN("!!should_transmit()");
 		return;
 	}
 
@@ -1013,6 +1014,7 @@ Mavlink::send_bytes(const uint8_t *buf, unsigned packet_len)
 			/* not enough space in buffer to send */
 			count_txerr();
 			count_txerrbytes(packet_len);
+			PX4_WARN("not enough space in buffer to send");
 			return;
 		}
 	}
