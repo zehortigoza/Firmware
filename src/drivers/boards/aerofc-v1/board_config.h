@@ -145,6 +145,8 @@
 
 #define MEMORY_CONSTRAINED_SYSTEM
 
+#define OPTICAL_FLOW_USE_INTERNAL_GYRO_DATA 1
+
 __BEGIN_DECLS
 
 /****************************************************************************************************
