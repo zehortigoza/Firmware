@@ -656,7 +656,7 @@ void Ekf2::task_main()
 
 			if (PX4_ISFINITE(optical_flow.pixel_flow_y_integral) &&
 			    PX4_ISFINITE(optical_flow.pixel_flow_x_integral)) {
-				_ekf.setOpticalFlowData(optical_flow.timestamp, &flow);
+				_ekf.setOpticalFlowData(now, &flow);
 			}
 		}
 
