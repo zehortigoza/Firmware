@@ -569,11 +569,14 @@ bool preflightCheck(orb_advert_t *mavlink_log_pub, bool checkMag, bool checkAcc,
 		    bool checkBaro, bool checkAirspeed, bool checkRC, bool checkGNSS,
 		    bool checkDynamic, bool isVTOL, bool reportFailures, bool prearm, hrt_abstime time_since_boot)
 {
-
 	if (time_since_boot < 1e6) {
 		// the airspeed driver filter doesn't deliver the actual value yet
 		return true;
 	}
+
+	checkMag = false;
+	checkAcc = false;
+	checkGyro = false;
 
 #ifdef __PX4_QURT
 	// WARNING: Preflight checks are important and should be added back when
