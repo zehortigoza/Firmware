@@ -494,7 +494,7 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 out:
 
 	if (send_ack) {
-		vehicle_command_ack_s command_ack;
+		vehicle_command_ack_s command_ack = {};
 		command_ack.command = cmd_mavlink.command;
 
 		if (ret == PX4_OK) {
@@ -603,7 +603,7 @@ MavlinkReceiver::handle_message_command_int(mavlink_message_t *msg)
 out:
 
 	if (send_ack) {
-		vehicle_command_ack_s command_ack;
+		vehicle_command_ack_s command_ack = {};
 		command_ack.command = cmd_mavlink.command;
 
 		if (ret == PX4_OK) {
@@ -632,7 +632,7 @@ MavlinkReceiver::handle_message_command_ack(mavlink_message_t *msg)
 
 	MavlinkCommandSender::instance().handle_mavlink_command_ack(ack, msg->sysid, msg->compid);
 
-	vehicle_command_ack_s command_ack;
+	vehicle_command_ack_s command_ack = {};
 	command_ack.result = ack.result;
 	command_ack.command = ack.command;
 

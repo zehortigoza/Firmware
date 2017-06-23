@@ -196,7 +196,7 @@ void SendEvent::process_commands()
 
 void SendEvent::answer_command(const vehicle_command_s &cmd, unsigned result)
 {
-	struct vehicle_command_ack_s command_ack;
+	struct vehicle_command_ack_s command_ack = {};
 
 	/* publish ACK */
 	command_ack.command = cmd.command;
