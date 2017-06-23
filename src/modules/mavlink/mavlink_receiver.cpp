@@ -193,6 +193,10 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 		handle_message_command_ack(msg);
 		break;
 
+	case MAVLINK_MSG_ID_COMMAND_ACK2:
+		handle_message_command_ack2(msg);
+		break;
+
 	case MAVLINK_MSG_ID_OPTICAL_FLOW_RAD:
 		handle_message_optical_flow_rad(msg);
 		break;
@@ -649,6 +653,34 @@ MavlinkReceiver::handle_message_command_ack(mavlink_message_t *msg)
 		if (msg->compid == MAV_COMP_ID_CAMERA) {
 			PX4_WARN("Got unsuccessful result %d from camera", ack.result);
 		}
+	}
+}
+
+void
+MavlinkReceiver::handle_message_command_ack2(mavlink_message_t *msg)
+{
+	mavlink_command_ack2_t ack2;
+	mavlink_msg_command_ack2_decode(msg, &ack2);
+
+	if (_mavlink->get_system_id() != ack2.target_system) {
+		return;
+	}
+
+	MavlinkCommandSender::instance().handle_mavlink_command_ack2(ack2, msg->sysid, msg->compid);
+
+	vehicle_command_ack_s command_ack = {};
+	command_ack.result = ack2.result;
+	command_ack.command = ack2.command;
+	command_ack.target_system = ack2.target_system;
+	command_ack.result_param1 = ack2.result_param1;
+	command_ack.result_param2 = ack2.result_param2;
+
+	if (_command_ack_pub == nullptr) {
+		_command_ack_pub = orb_advertise_queue(ORB_ID(vehicle_command_ack), &command_ack,
+						       vehicle_command_ack_s::ORB_QUEUE_LENGTH);
+
+	} else {
+		orb_publish(ORB_ID(vehicle_command_ack), _command_ack_pub, &command_ack);
 	}
 }
 

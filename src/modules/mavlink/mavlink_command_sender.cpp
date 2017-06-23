@@ -124,15 +124,27 @@ int MavlinkCommandSender::handle_vehicle_command(const struct vehicle_command_s 
 void MavlinkCommandSender::handle_mavlink_command_ack(const mavlink_command_ack_t &ack,
 		uint8_t from_sysid, uint8_t from_compid)
 {
+	_handle_mavlink_command_ack(ack.command, ack.result, from_sysid, from_compid);
+}
+
+void MavlinkCommandSender::handle_mavlink_command_ack2(const mavlink_command_ack2_t &ack,
+		uint8_t from_sysid, uint8_t from_compid)
+{
+	_handle_mavlink_command_ack(ack.command, ack.result, from_sysid, from_compid);
+}
+
+void MavlinkCommandSender::_handle_mavlink_command_ack(uint16_t command,
+		uint8_t result, uint8_t from_sysid, uint8_t from_compid)
+{
 	CMD_DEBUG("handling result %d for command %d: %d from %d",
-		  ack.result, ack.command, from_sysid, from_compid);
+		  result, command, from_sysid, from_compid);
 	lock();
 
 	_commands.reset_to_start();
 
 	while (command_item_t *item = _commands.get_next()) {
 		// Check if the incoming ack matches any of the commands that we have sent.
-		if (item->command.command == ack.command &&
+		if (item->command.command == command &&
 		    from_sysid == item->command.target_system &&
 		    from_compid == item->command.target_component) {
 			// Drop it anyway because the command seems to have arrived at the destination, even if we

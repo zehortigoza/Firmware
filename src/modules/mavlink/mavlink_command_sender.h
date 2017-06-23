@@ -83,6 +83,12 @@ public:
 	 */
 	void handle_mavlink_command_ack(const mavlink_command_ack_t &ack, uint8_t from_sysid, uint8_t from_compid);
 
+	/**
+	 * Handle mavlink command_ack2.
+	 * thread-safe
+	 */
+	void handle_mavlink_command_ack2(const mavlink_command_ack2_t &ack, uint8_t from_sysid, uint8_t from_compid);
+
 private:
 	MavlinkCommandSender();
 
@@ -120,4 +126,6 @@ private:
 	/* do not allow copying or assigning this class */
 	MavlinkCommandSender(const MavlinkCommandSender &) = delete;
 	MavlinkCommandSender operator=(const MavlinkCommandSender &) = delete;
+
+	void _handle_mavlink_command_ack(uint16_t command, uint8_t result, uint8_t from_sysid, uint8_t from_compid);
 };

@@ -2207,13 +2207,26 @@ Mavlink::task_main(int argc, char *argv[])
 		struct vehicle_command_ack_s command_ack = {};
 
 		if (ack_sub->update(&ack_time, &command_ack)) {
-			mavlink_command_ack_t msg;
-			msg.result = command_ack.result;
-			msg.command = command_ack.command;
-			current_command_ack = command_ack.command;
+			if (command_ack.target_system != 0) {
+				mavlink_command_ack2_t msg;
+				msg.result = command_ack.result;
+				msg.target_system = command_ack.target_system;
+				msg.command = command_ack.command;
+				msg.result_param1 = command_ack.result_param1;
+				msg.result_param2 = command_ack.result_param2;
 
-			mavlink_msg_command_ack_send_struct(get_channel(), &msg);
-			PX4_WARN("mavlink_msg_command_ack_send_struct() cmd=%u timestamp=%llu", msg.command, command_ack.timestamp);
+				mavlink_msg_command_ack2_send_struct(get_channel(), &msg);
+
+			} else {
+				mavlink_command_ack_t msg;
+				msg.result = command_ack.result;
+				msg.command = command_ack.command;
+
+				PX4_WARN("mavlink_msg_command_ack_send_struct() cmd=%u timestamp=%llu", msg.command, command_ack.timestamp);
+				mavlink_msg_command_ack_send_struct(get_channel(), &msg);
+			}
+
+			current_command_ack = command_ack.command;
 		}
 
 		struct mavlink_log_s mavlink_log;
