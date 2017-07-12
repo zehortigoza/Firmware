@@ -511,6 +511,7 @@ out:
 		} else {
 			orb_publish(ORB_ID(vehicle_command_ack), _command_ack_pub, &command_ack);
 		}
+		PX4_WARN("MavlinkReceiver::handle_message_command_long orb_publish(ORB_ID(vehicle_command_ack)");
 	}
 }
 
@@ -619,6 +620,7 @@ out:
 		} else {
 			orb_publish(ORB_ID(vehicle_command_ack), _command_ack_pub, &command_ack);
 		}
+		PX4_WARN("MavlinkReceiver::handle_message_command_int orb_publish(ORB_ID(vehicle_command_ack)");
 	}
 }
 
@@ -641,6 +643,7 @@ MavlinkReceiver::handle_message_command_ack(mavlink_message_t *msg)
 	} else {
 		orb_publish(ORB_ID(vehicle_command_ack), _command_ack_pub, &command_ack);
 	}
+	PX4_WARN("MavlinkReceiver::handle_message_command_ack orb_publish(ORB_ID(vehicle_command_ack)");
 
 	if (ack.result != MAV_RESULT_ACCEPTED && ack.result != MAV_RESULT_IN_PROGRESS) {
 		if (msg->compid == MAV_COMP_ID_CAMERA) {

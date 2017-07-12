@@ -2213,7 +2213,7 @@ Mavlink::task_main(int argc, char *argv[])
 			current_command_ack = command_ack.command;
 
 			mavlink_msg_command_ack_send_struct(get_channel(), &msg);
-			PX4_WARN("mavlink_msg_command_ack_send_struct() cmd=%u", msg.command);
+			PX4_WARN("mavlink_msg_command_ack_send_struct() cmd=%u timestamp=%llu", msg.command, command_ack.timestamp);
 		}
 
 		struct mavlink_log_s mavlink_log;

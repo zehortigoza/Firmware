@@ -2052,7 +2052,7 @@ void Logger::ack_vehicle_command(orb_advert_t &vehicle_command_ack_pub, uint16_t
 	} else {
 		orb_publish(ORB_ID(vehicle_command_ack), vehicle_command_ack_pub, &vehicle_command_ack);
 	}
-
+	PX4_WARN("Logger orb_publish(ORB_ID(vehicle_command_ack) timestamp=%llu", vehicle_command_ack.timestamp);
 }
 
 }

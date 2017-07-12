@@ -729,6 +729,7 @@ CameraTrigger::cycle_trampoline(void *arg)
 			orb_publish(ORB_ID(vehicle_command_ack), trig->_cmd_ack_pub, &command_ack);
 
 		}
+		PX4_WARN("camera_trigger orb_publish(ORB_ID(vehicle_command_ack)");
 	}
 
 	work_queue(LPWORK, &_work, (worker_t)&CameraTrigger::cycle_trampoline,

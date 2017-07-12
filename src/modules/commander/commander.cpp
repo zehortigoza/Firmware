@@ -4096,6 +4096,7 @@ void answer_command(struct vehicle_command_s &cmd, unsigned result,
 	} else {
 		command_ack_pub = orb_advertise_queue(ORB_ID(vehicle_command_ack), &command_ack, vehicle_command_ack_s::ORB_QUEUE_LENGTH);
 	}
+	PX4_WARN("commander orb_publish(ORB_ID(vehicle_command_ack)");
 }
 
 void *commander_low_prio_loop(void *arg)

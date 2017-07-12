@@ -297,6 +297,7 @@ void InputMavlinkCmdMount::_ack_vehicle_command(uint16_t command)
 	} else {
 		orb_publish(ORB_ID(vehicle_command_ack), _vehicle_command_ack_pub, &vehicle_command_ack);
 	}
+	PX4_WARN("InputMavlinkCmdMount orb_publish(ORB_ID(vehicle_command_ack)");
 
 }
 

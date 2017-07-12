@@ -210,6 +210,7 @@ void SendEvent::answer_command(const vehicle_command_s &cmd, unsigned result)
 		_command_ack_pub = orb_advertise_queue(ORB_ID(vehicle_command_ack), &command_ack,
 						       vehicle_command_ack_s::ORB_QUEUE_LENGTH);
 	}
+	PX4_WARN("SendEvent orb_publish(ORB_ID(vehicle_command_ack)");
 }
 
 
