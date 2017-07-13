@@ -793,7 +793,7 @@ PX4IO::init()
 		} while (true);
 
 		/* send command to arm system via command API */
-		vehicle_command_s cmd;
+		vehicle_command_s cmd = {};
 		/* send this to itself */
 		param_t sys_id_param = param_find("MAV_SYS_ID");
 		param_t comp_id_param = param_find("MAV_COMP_ID");

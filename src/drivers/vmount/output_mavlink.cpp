@@ -54,7 +54,7 @@ OutputMavlink::OutputMavlink(const OutputConfig &output_config)
 
 int OutputMavlink::update(const ControlData *control_data)
 {
-	vehicle_command_s vehicle_command;
+	vehicle_command_s vehicle_command = {};
 
 	if (control_data) {
 		//got new command
