@@ -453,22 +453,18 @@ protected:
 	{
 		struct vehicle_command_s cmd;
 
-		if (_cmd_sub->update(&_cmd_time, &cmd)) {
+		if (_cmd_sub->update_if_changed(&cmd)) {
 
-			/* only send commands for other systems/components, don't forward broadcast commands */
-			if ((cmd.target_system != mavlink_system.sysid || cmd.target_component != mavlink_system.compid) &&
-			    (cmd.target_system != 0)) {
-
-				if (_mavlink->verbose()) {
-					PX4_INFO("sending command %d to %d/%d", cmd.command, cmd.target_system, cmd.target_component);
-				}
+			if (!cmd.from_external) {
+				//if (_mavlink->verbose()) {
+					PX4_WARN("sending command %d to %d/%d", cmd.command, cmd.target_system, cmd.target_component);
+				//}
 
 				MavlinkCommandSender::instance().handle_vehicle_command(cmd, _mavlink->get_channel());
-
 			} else {
-				if (_mavlink->verbose()) {
-					PX4_INFO("not forwarding command %d to %d/%d", cmd.command, cmd.target_system, cmd.target_component);
-				}
+				//if (_mavlink->verbose()) {
+					PX4_WARN("not forwarding command %d to %d/%d", cmd.command, cmd.target_system, cmd.target_component);
+				//}
 			}
 		}
 

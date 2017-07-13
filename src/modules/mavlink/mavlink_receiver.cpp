@@ -485,6 +485,8 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 
 		vcmd.confirmation =  cmd_mavlink.confirmation;
 
+		vcmd.from_external = 1;
+
 		if (_cmd_pub == nullptr) {
 			_cmd_pub = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd, vehicle_command_s::ORB_QUEUE_LENGTH);
 
@@ -594,6 +596,8 @@ MavlinkReceiver::handle_message_command_int(mavlink_message_t *msg)
 
 		vcmd.source_component = msg->compid;
 
+		vcmd.from_external = 1;
+
 		if (_cmd_pub == nullptr) {
 			_cmd_pub = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd, vehicle_command_s::ORB_QUEUE_LENGTH);
 
@@ -638,6 +642,7 @@ MavlinkReceiver::handle_message_command_ack(mavlink_message_t *msg)
 	vehicle_command_ack_s command_ack = {};
 	command_ack.result = ack.result;
 	command_ack.command = ack.command;
+	command_ack.from_external = 1;
 
 	if (_command_ack_pub == nullptr) {
 		_command_ack_pub = orb_advertise_queue(ORB_ID(vehicle_command_ack), &command_ack,
@@ -676,6 +681,7 @@ MavlinkReceiver::handle_message_command_ack2(mavlink_message_t *msg)
 	command_ack.target_system = ack2.target_system;
 	command_ack.result_param1 = ack2.result_param1;
 	command_ack.result_param2 = ack2.result_param2;
+	command_ack.from_external = 1;
 
 	if (_command_ack_pub == nullptr) {
 		_command_ack_pub = orb_advertise_queue(ORB_ID(vehicle_command_ack), &command_ack,
@@ -825,6 +831,7 @@ MavlinkReceiver::handle_message_set_mode(mavlink_message_t *msg)
 	vcmd.source_component = msg->compid;
 	vcmd.confirmation = 1;
 	vcmd.timestamp = hrt_absolute_time();
+	vcmd.from_external = 1;
 
 	if (_cmd_pub == nullptr) {
 		_cmd_pub = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd, vehicle_command_s::ORB_QUEUE_LENGTH);
