@@ -977,6 +977,7 @@ Navigator::publish_vehicle_cmd(const struct vehicle_command_s &vcmd)
 	} else {
 		_vehicle_cmd_pub = orb_advertise_queue(ORB_ID(vehicle_command), &vcmd, vehicle_command_s::ORB_QUEUE_LENGTH);
 	}
+	PX4_WARN("Navigator orb_advertise_queue(ORB_ID(vehicle_command));");
 }
 
 void

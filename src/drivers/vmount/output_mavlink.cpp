@@ -79,6 +79,7 @@ int OutputMavlink::update(const ControlData *control_data)
 			_vehicle_command_pub = orb_advertise_queue(ORB_ID(vehicle_command), &vehicle_command,
 					       vehicle_command_s::ORB_QUEUE_LENGTH);
 		}
+		PX4_WARN("output_mavlink orb_advertise_queue(ORB_ID(vehicle_command)");
 
 	}
 

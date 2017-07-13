@@ -91,6 +91,7 @@ static void arm_auth_request_msg_send(hrt_abstime now)
 	} else {
 		orb_publish(ORB_ID(vehicle_command), handle_vehicle_command_pub, &cmd);
 	}
+	PX4_WARN("arm_auth_request_msg_send() handle_vehicle_command_pub=%p", handle_vehicle_command_pub);
 }
 
 static uint8_t _auth_method_arm_req_check(hrt_abstime now)

@@ -490,6 +490,7 @@ CameraTrigger::test()
 
 	orb_advert_t pub;
 	pub = orb_advertise_queue(ORB_ID(vehicle_command), &cmd, vehicle_command_s::ORB_QUEUE_LENGTH);
+	PX4_WARN("CameraTrigger orb_advertise_queue(ORB_ID(vehicle_command)");
 	(void)orb_unadvertise(pub);
 }
 

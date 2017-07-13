@@ -829,6 +829,7 @@ PX4IO::init()
 
 		/* send command once */
 		orb_advert_t pub = orb_advertise_queue(ORB_ID(vehicle_command), &cmd, vehicle_command_s::ORB_QUEUE_LENGTH);
+		PX4_WARN("pxio orb_advertise_queue(ORB_ID(vehicle_command)");
 
 		/* spin here until IO's state has propagated into the system */
 		do {
@@ -850,6 +851,7 @@ PX4IO::init()
 			/* re-send if necessary */
 			if (!safety.armed) {
 				orb_publish(ORB_ID(vehicle_command), pub, &cmd);
+				PX4_WARN("px4io2 orb_advertise_queue(ORB_ID(vehicle_command)");
 				DEVICE_LOG("re-sending arm cmd");
 			}
 

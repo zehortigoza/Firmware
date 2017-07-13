@@ -497,6 +497,7 @@ int commander_main(int argc, char *argv[])
 				cmd.timestamp = hrt_absolute_time();
 
 				orb_advert_t h = orb_advertise_queue(ORB_ID(vehicle_command), &cmd, vehicle_command_s::ORB_QUEUE_LENGTH);
+				PX4_WARN("commander takeoff  orb_advertise_queue(ORB_ID(vehicle_command));");
 				(void)orb_unadvertise(h);
 
 			} else {
@@ -526,6 +527,7 @@ int commander_main(int argc, char *argv[])
 		cmd.param7 = NAN;
 
 		orb_advert_t h = orb_advertise_queue(ORB_ID(vehicle_command), &cmd, vehicle_command_s::ORB_QUEUE_LENGTH);
+		PX4_WARN("commander land  orb_advertise_queue(ORB_ID(vehicle_command));");
 		(void)orb_unadvertise(h);
 
 		return 0;
@@ -549,6 +551,7 @@ int commander_main(int argc, char *argv[])
 		cmd.param7 = NAN;
 
 		orb_advert_t h = orb_advertise_queue(ORB_ID(vehicle_command), &cmd, vehicle_command_s::ORB_QUEUE_LENGTH);
+		PX4_WARN("commander transition  orb_advertise_queue(ORB_ID(vehicle_command));");
 		(void)orb_unadvertise(h);
 
 		return 0;
@@ -611,6 +614,7 @@ int commander_main(int argc, char *argv[])
 		cmd.param1 = strcmp(argv[2], "off") ? 2.0f : 0.0f; /* lockdown */
 
 		orb_advert_t h = orb_advertise_queue(ORB_ID(vehicle_command), &cmd, vehicle_command_s::ORB_QUEUE_LENGTH);
+		PX4_WARN("commander lockdown  orb_advertise_queue(ORB_ID(vehicle_command));");
 		(void)orb_unadvertise(h);
 
 		return 0;
@@ -4101,7 +4105,7 @@ void answer_command(struct vehicle_command_s &cmd, unsigned result,
 	} else {
 		command_ack_pub = orb_advertise_queue(ORB_ID(vehicle_command_ack), &command_ack, vehicle_command_ack_s::ORB_QUEUE_LENGTH);
 	}
-	PX4_WARN("commander orb_publish(ORB_ID(vehicle_command_ack)");
+	PX4_WARN("commander orb_publish(ORB_ID(vehicle_command_ack) command_ack.command=%u", command_ack.command);
 }
 
 void *commander_low_prio_loop(void *arg)

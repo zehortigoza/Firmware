@@ -318,6 +318,7 @@ int send_event_main(int argc, char *argv[])
 		cmd.param7 = (baro_calib || calib_all) ? vehicle_command_s::PREFLIGHT_CALIBRATION_TEMPERATURE_CALIBRATION : NAN;
 
 		orb_advert_t h = orb_advertise_queue(ORB_ID(vehicle_command), &cmd, vehicle_command_s::ORB_QUEUE_LENGTH);
+		PX4_WARN("send event  orb_advertise_queue(ORB_ID(vehicle_command));");
 		(void)orb_unadvertise(h);
 
 	} else {

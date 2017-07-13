@@ -493,6 +493,7 @@ MavlinkReceiver::handle_message_command_long(mavlink_message_t *msg)
 		} else {
 			orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vcmd);
 		}
+		PX4_WARN("handle_message_command_long() cmd=%u timestamp=%llu", vcmd.command, vcmd.timestamp);
 	}
 
 out:
@@ -508,6 +509,7 @@ out:
 			command_ack.result = vehicle_command_ack_s::VEHICLE_RESULT_FAILED;
 		}
 
+		PX4_WARN("mavlink receiver handle_message_command_long() orb_advertise_queue(ORB_ID(vehicle_command_ack)");
 		if (_command_ack_pub == nullptr) {
 			_command_ack_pub = orb_advertise_queue(ORB_ID(vehicle_command_ack), &command_ack,
 							       vehicle_command_ack_s::ORB_QUEUE_LENGTH);
@@ -602,6 +604,7 @@ MavlinkReceiver::handle_message_command_int(mavlink_message_t *msg)
 		} else {
 			orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vcmd);
 		}
+		PX4_WARN("handle_message_command_int()  orb_advertise_queue(ORB_ID(vehicle_command));");
 	}
 
 out:
@@ -647,7 +650,8 @@ MavlinkReceiver::handle_message_command_ack(mavlink_message_t *msg)
 	} else {
 		orb_publish(ORB_ID(vehicle_command_ack), _command_ack_pub, &command_ack);
 	}
-	PX4_WARN("MavlinkReceiver::handle_message_command_ack orb_publish(ORB_ID(vehicle_command_ack)");
+
+	PX4_WARN("MavlinkReceiver handle_message_command_ack() command=%u timestamp=%llu", command_ack.command, command_ack.timestamp);
 
 	if (ack.result != MAV_RESULT_ACCEPTED && ack.result != MAV_RESULT_IN_PROGRESS) {
 		if (msg->compid == MAV_COMP_ID_CAMERA) {
@@ -661,6 +665,8 @@ MavlinkReceiver::handle_message_command_ack2(mavlink_message_t *msg)
 {
 	mavlink_command_ack2_t ack2;
 	mavlink_msg_command_ack2_decode(msg, &ack2);
+
+	PX4_WARN("handle_message_command_ack2()");
 
 	if (_mavlink->get_system_id() != ack2.target_system) {
 		return;
@@ -682,6 +688,8 @@ MavlinkReceiver::handle_message_command_ack2(mavlink_message_t *msg)
 	} else {
 		orb_publish(ORB_ID(vehicle_command_ack), _command_ack_pub, &command_ack);
 	}
+
+	PX4_WARN("MavlinkReceiver::handle_message_command_ack2() cmd=%u", command_ack.command);
 }
 
 void
@@ -829,6 +837,7 @@ MavlinkReceiver::handle_message_set_mode(mavlink_message_t *msg)
 	} else {
 		orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vcmd);
 	}
+	PX4_WARN("handle_message_set_mode()  orb_advertise_queue(ORB_ID(vehicle_command));");
 }
 
 void
