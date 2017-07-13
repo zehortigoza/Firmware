@@ -405,8 +405,8 @@ Navigator::task_main()
 
 				// Position change with optional altitude change
 				if (PX4_ISFINITE(cmd.param5) && PX4_ISFINITE(cmd.param6)) {
-					rep->current.lat = (cmd.param5 < 1000) ? cmd.param5 : cmd.param5 / (double)1e7;
-					rep->current.lon = (cmd.param6 < 1000) ? cmd.param6 : cmd.param6 / (double)1e7;
+					rep->current.lat = (cmd.param5 < 1000) ? cmd.param5 : cmd.param5 / (float)1e7;
+					rep->current.lon = (cmd.param6 < 1000) ? cmd.param6 : cmd.param6 / (float)1e7;
 
 					if (PX4_ISFINITE(cmd.param7)) {
 						rep->current.alt = cmd.param7;
@@ -459,8 +459,8 @@ Navigator::task_main()
 				}
 
 				if (PX4_ISFINITE(cmd.param5) && PX4_ISFINITE(cmd.param6)) {
-					rep->current.lat = (cmd.param5 < 1000) ? cmd.param5 : cmd.param5 / (double)1e7;
-					rep->current.lon = (cmd.param6 < 1000) ? cmd.param6 : cmd.param6 / (double)1e7;
+					rep->current.lat = (cmd.param5 < 1000) ? cmd.param5 : cmd.param5 / (float)1e7;
+					rep->current.lon = (cmd.param6 < 1000) ? cmd.param6 : cmd.param6 / (float)1e7;
 
 				} else {
 					// If one of them is non-finite, reset both

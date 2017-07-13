@@ -97,12 +97,12 @@ float32 param1			# Parameter 1, as defined by MAVLink uint32 VEHICLE_CMD enum.
 float32 param2			# Parameter 2, as defined by MAVLink uint32 VEHICLE_CMD enum.
 float32 param3			# Parameter 3, as defined by MAVLink uint32 VEHICLE_CMD enum.
 float32 param4			# Parameter 4, as defined by MAVLink uint32 VEHICLE_CMD enum.
-float64 param5			# Parameter 5, as defined by MAVLink uint32 VEHICLE_CMD enum.
-float64 param6			# Parameter 6, as defined by MAVLink uint32 VEHICLE_CMD enum.
+float32 param5			# Parameter 5, as defined by MAVLink uint32 VEHICLE_CMD enum.
+float32 param6			# Parameter 6, as defined by MAVLink uint32 VEHICLE_CMD enum.
 float32 param7			# Parameter 7, as defined by MAVLink uint32 VEHICLE_CMD enum.
-uint32 command			# Command ID, as defined MAVLink by uint32 VEHICLE_CMD enum.
-uint32 target_system		# System which should execute the command
-uint32 target_component		# Component which should execute the command, 0 for all components
-uint32 source_system		# System sending the command
-uint32 source_component		# Component sending the command
+uint16 command			# Command ID, as defined MAVLink by uint32 VEHICLE_CMD enum.
+uint8 target_system		# System which should execute the command
+uint8 target_component		# Component which should execute the command, 0 for all components
+uint8 source_system		# System sending the command
+uint8 source_component		# Component sending the command
 uint8 confirmation		# 0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
