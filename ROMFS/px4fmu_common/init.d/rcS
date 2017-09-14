@@ -564,7 +564,7 @@ then
 
 		if ver hwcmp AEROFC_V1
 		then
-			set MAVLINK_F "-r 1200 -d /dev/ttyS5"
+			set MAVLINK_F none
 		fi
 
 		if ver hwcmp CRAZYFLIE
