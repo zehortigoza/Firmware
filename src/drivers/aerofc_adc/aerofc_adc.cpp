@@ -50,8 +50,8 @@
 
 #define SLAVE_ADDR 0x50
 #define ADC_ENABLE_REG 0x00
-#define ADC_CHANNEL_REG 0x05
-#define MAX_CHANNEL 5
+#define BATTERY_ADC_CHANNEL_REG 0xA
+#define MAX_ADC_CHANNELS 5
 
 // 10Hz
 #define CYCLE_TICKS_DELAY MSEC2TICK(100)
@@ -110,14 +110,14 @@ static void test()
 		err(1, "can't open ADC device");
 	}
 
-	px4_adc_msg_t data[MAX_CHANNEL];
+	px4_adc_msg_t data[MAX_ADC_CHANNELS];
 	ssize_t count = read(fd, data, sizeof(data));
 
 	if (count < 0) {
 		errx(1, "read error");
 	}
 
-	unsigned channels = count / sizeof(data[0]);
+	const unsigned channels = count / sizeof(data[0]);
 
 	for (unsigned j = 0; j < channels; j++) {
 		printf("%d: %u  ", data[j].am_channel, data[j].am_data);
@@ -251,11 +251,9 @@ int AEROFC_ADC::probe()
 		goto error;
 	}
 
-	usleep(10000);
-
 	/* Read ADC value */
-	buffer[0] = ADC_CHANNEL_REG;
-	ret = transfer(buffer, 1, buffer, 2);
+	buffer[0] = BATTERY_ADC_CHANNEL_REG;
+	ret = transfer(buffer, 1, buffer, sizeof(buffer));
 
 	if (ret != PX4_OK) {
 		goto error;
@@ -300,7 +298,7 @@ void AEROFC_ADC::cycle()
 	uint8_t buffer[2];
 	int ret;
 
-	buffer[0] = ADC_CHANNEL_REG;
+	buffer[0] = BATTERY_ADC_CHANNEL_REG;
 	ret = transfer(buffer, 1, buffer, sizeof(buffer));
 
 	if (ret != PX4_OK) {
