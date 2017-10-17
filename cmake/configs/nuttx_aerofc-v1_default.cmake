@@ -22,6 +22,7 @@ set(config_module_list
 	drivers/ll40ls
 	drivers/aerofc_adc
 	modules/sensors
+	drivers/mb12xx_serial
 
 	#
 	# System commands
