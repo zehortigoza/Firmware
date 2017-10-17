@@ -66,6 +66,9 @@ then
 	param set EKF2_ACC_NOISE 0.7
 
 	param set SYS_LOGGER 1
+
+	param set AEROFC_I2C_TELEM 0
+	param set AEROFC_UART_INV 0
 fi
 
 tap_esc start -d /dev/ttyS0 -n 4
@@ -77,3 +80,5 @@ set USE_IO no
 
 param set SYS_COMPANION 921600
 set MAVLINK_COMPANION_DEVICE /dev/ttyS1
+
+aerofc_fpga_config
