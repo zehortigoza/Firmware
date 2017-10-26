@@ -26,6 +26,7 @@ set(config_module_list
 	modules/sensors
 	# dummy tone alarm
 	modules/dummy
+	drivers/benewake_ulidar
 
 	#
 	# System commands
