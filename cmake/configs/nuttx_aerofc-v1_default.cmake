@@ -19,6 +19,7 @@ set(config_module_list
 	drivers/mpu9250
 	drivers/ms5611
 	drivers/hmc5883
+	drivers/lis3mdl
 	drivers/gps
 	drivers/ist8310
 	drivers/ll40ls

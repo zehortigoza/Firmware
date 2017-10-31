@@ -1335,6 +1335,9 @@ struct lis3mdl_bus_option {
 #ifdef PX4_I2C_BUS_ONBOARD
 	{ LIS3MDL_BUS_I2C_INTERNAL, "/dev/lis3mdl_int", &LIS3MDL_I2C_interface, PX4_I2C_BUS_ONBOARD, NULL },
 #endif
+#ifdef PX4_I2C_BUS_EXPANSION1
+	{ LIS3MDL_BUS_I2C_EXTERNAL, "/dev/lis3mdl_ext2", &LIS3MDL_I2C_interface, PX4_I2C_BUS_EXPANSION1, NULL },
+#endif
 #ifdef PX4_SPIDEV_LIS
 	{ LIS3MDL_BUS_SPI, "/dev/lis3mdl_spi", &LIS3MDL_SPI_interface, PX4_SPI_BUS_SENSORS, NULL },
 #endif

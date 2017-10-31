@@ -165,10 +165,12 @@
  * Note that these are unshifted addresses.
  */
 #define PX4_I2C_OBDEV_LED            0x55
-#define PX4_I2C_OBDEV_HMC5883        0x1e
-#define PX4_I2C_OBDEV_LIS3MDL        0x1e
 #define PX4_I2C_OBDEV_BMM150         0x10
 #define PX4_I2C_OBDEV_BMP280         0x76
+
+#define PX4_I2C_OBDEV_HMC5883        0x1e
+#define PX4_I2C_OBDEV_LIS3MDL        0x1c
+
 
 /*
  * ADC channels
