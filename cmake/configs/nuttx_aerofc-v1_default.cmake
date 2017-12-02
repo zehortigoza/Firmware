@@ -23,6 +23,7 @@ set(config_module_list
 	drivers/ist8310
 	drivers/ll40ls
 	drivers/aerofc_adc
+	drivers/leddar_one
 	modules/sensors
 	# dummy tone alarm
 	modules/dummy

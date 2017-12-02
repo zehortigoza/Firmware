@@ -327,6 +327,11 @@ then
 	if ll40ls start i2c
 	then
 	fi
+
+	# User need to set AEROFC_TELE_BPS to zero in order to free UART from MAVLink
+	if leddar_one start -d /dev/ttyS3 start
+	then
+	fi
 fi
 
 if ver hwcmp PX4FMU_V4PRO
