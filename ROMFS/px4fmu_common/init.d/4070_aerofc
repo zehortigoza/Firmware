@@ -67,6 +67,8 @@ then
 	param set EKF2_ACC_NOISE 0.7
 
 	param set SYS_LOGGER 1
+
+	param set AEROFC_TELE_BPS 57600
 fi
 
 tap_esc start -d /dev/ttyS0 -n 4
@@ -78,3 +80,14 @@ set USE_IO no
 
 param set SYS_COMPANION 921600
 set MAVLINK_COMPANION_DEVICE /dev/ttyS1
+
+set MAVLINK_F none
+
+if param compare AEROFC_TELE_BPS 57600
+then
+	set MAVLINK_F "-r 1200 -b 57600 -d /dev/ttyS3"
+fi
+if param compare AEROFC_TELE_BPS 115200
+then
+    set MAVLINK_F "-r 5000 -b 115200 -d /dev/ttyS3"
+fi
