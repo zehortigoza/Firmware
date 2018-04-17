@@ -127,7 +127,7 @@ void LogWriterFile::start_log(const char *filename)
 
 int LogWriterFile::hardfault_store_filename(const char *log_file)
 {
-#ifdef __PX4_NUTTX
+#if defined(__PX4_NUTTX) && (defined(CONFIG_STM32_SAVE_CRASHDUMP) || defined(CONFIG_STM32F7_SAVE_CRASHDUMP))
 	int fd = open(HARDFAULT_ULOG_PATH, O_TRUNC | O_WRONLY | O_CREAT);
 
 	if (fd < 0) {
